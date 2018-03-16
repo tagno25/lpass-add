@@ -21,7 +21,7 @@ Using LastPass adds quite a bit of overhead to a local-filesystem-based key mana
 It's just a Bash script. You can install it however you want, but something like this seems pretty popular:
 
 ``` bash
-curl https://raw.githubusercontent.com/luketurner/lpass-add/master/bin/lpass-add -o /usr/local/bin/lpass-add && chmod +x /usr/local/bin/lpass-add
+sudo curl https://raw.githubusercontent.com/luketurner/lpass-add/master/bin/lpass-add -o /usr/local/bin/lpass-add && sudo chmod +x /usr/local/bin/lpass-add
 ```
 
 However, `lpass-add` depends on the LastPass CLI tool `lpass`, which must also be installed on your machine. See the [lpass docs](https://github.com/lastpass/lastpass-cli) for more information about that. (Spoiler for OS X users: `brew update && brew install lastpass-cli --with-pinentry`) 
