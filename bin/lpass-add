@@ -3,7 +3,7 @@
 
 # Copyright (c) 2016 Luke Turner
 # Released under MIT License (SPDX:MIT)
-
+# Modified Igor Barbosa
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -29,5 +29,6 @@ trap onexit EXIT
 
 echo "Writing key $KEY_NAME to temporary file $TEMP_CERT_FILE"
 lpass show --notes "$KEY_NAME" > "$TEMP_CERT_FILE"
+chmod 0400 $TEMP_CERT_FILE
 echo "Adding SSH key $KEY_NAME"
 ssh-add "$TEMP_CERT_FILE"
