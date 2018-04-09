@@ -16,7 +16,7 @@ readonly TEMP_CERT_FILE
 onexit() {
 	local EXIT_CODE=$?
 	echo "Removing temporary file $TEMP_CERT_FILE"
-	rm "$TEMP_CERT_FILE"
+	rm  -f "$TEMP_CERT_FILE"
     if [[ $EXIT_CODE == 0 ]]; then
         echo "lpass-add: identity added successfully"
 	else
