@@ -4,31 +4,81 @@
 # Copyright (c) 2016 Luke Turner
 # Released under MIT License (SPDX:MIT)
 # Modified Igor Barbosa
+# Modified Tagno25
+
+if ! type "$(command -v lpass 2>&1)" > /dev/null; then
+    echo "You don't have LastPass CLI installed."
+    exit 99
+fi
+
 set -o errexit
 set -o nounset
 set -o pipefail
 
-readonly KEY_NAME="${1:?Usage: lpass-add [lpass-key-id]}"
-
-TEMP_CERT_FILE=$(mktemp)
-readonly TEMP_CERT_FILE
+usage() {
+    echo "Usage: $0 lpass-key-id"
+    echo "Usage: $0 -a [-F lpass_folder]"
+    exit 1
+}
 
 onexit() {
-	local EXIT_CODE=$?
-	echo "Removing temporary file $TEMP_CERT_FILE"
-	rm  -f "$TEMP_CERT_FILE"
+        local EXIT_CODE=$?
+        echo "Removing temporary file $TEMP_CERT_FILE"
+        rm  -f "$TEMP_CERT_FILE"
     if [[ $EXIT_CODE == 0 ]]; then
         echo "lpass-add: identity added successfully"
-	else
+        else
         echo "lpass-add: failed to add identity $KEY_NAME"
         echo "Script exited with code $EXIT_CODE"
     fi
 }
 
+while getopts ":F:a" o; do
+    case "${o}" in
+        a)
+            all="true"
+            ;;
+        F)
+            LPASS_FOLDER=${OPTARG}
+            ;;
+        *)
+            usage
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+if { [ -z ${all-} ] || [ $# -eq 1 ]; } && ! { [ -z ${all-} ] && [ $# -eq 1 ]; }; then
+    usage
+fi
+
+LPASS_FOLDER='Secure Notes\SSH'
+TEMP_CERT_FILE=$(mktemp)
+readonly TEMP_CERT_FILE
+COUNT=1
+
+if [ $# -eq 1 ]; then
+    readonly KEYS=("${1}")
+else
+    KEYS=()
+    mapfile -d "]" -s 1 KEYS < <(echo $(lpass ls "$LPASS_FOLDER"))
+
+    unset KEYS[-1]
+    for i in "${!KEYS[@]}"
+    do
+        KEYS[$i]="${KEYS[i]% [*}"
+        KEYS[$i]="${KEYS[i]#"${KEYS[i]%%[![:space:]]*}"}"
+    done
+fi
+
 trap onexit EXIT
 
-echo "Writing key $KEY_NAME to temporary file $TEMP_CERT_FILE"
-lpass show --notes "$KEY_NAME" > "$TEMP_CERT_FILE"
-chmod 0400 $TEMP_CERT_FILE
-echo "Adding SSH key $KEY_NAME"
-ssh-add "$TEMP_CERT_FILE"
+for KEY_NAME in "${KEYS[@]}"
+do
+    rm  -f "$TEMP_CERT_FILE"
+    echo "Writing key $KEY_NAME to temporary file $TEMP_CERT_FILE"
+    lpass show --field "Private Key" "$KEY_NAME" > "$TEMP_CERT_FILE"
+    chmod 0400 $TEMP_CERT_FILE
+    echo "Adding SSH key $KEY_NAME"
+    ssh-add "$TEMP_CERT_FILE"
+done

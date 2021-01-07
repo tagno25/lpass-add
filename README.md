@@ -38,6 +38,11 @@ Say you have a LastPass entry called `my-ssh-key` with a SSH private key pasted 
 $ lpass-add my-ssh-key
 ```
 
+Or you can add all keys in the "Secure Note\SSH" lpass folder.  To use a diffrent folder, specify using "-F folder_name".
+``` bash
+$ lpass-add -a
+````
+
 Of course, you must be logged in to `lpass` for this to work. 
 
 ### Managing private keys with lpass
