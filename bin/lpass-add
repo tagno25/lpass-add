@@ -16,8 +16,8 @@ set -o nounset
 set -o pipefail
 
 usage() {
-    echo "Usage: $0 lpass-key-id"
-    echo "Usage: $0 -a [-F lpass_folder]"
+    echo "Usage: $0 lpass-key-id [-p]"
+    echo "Usage: $0 -a [-F lpass_folder] [-p]"
     exit 1
 }
 
@@ -33,13 +33,16 @@ onexit() {
     fi
 }
 
-while getopts ":F:a" o; do
+while getopts ":F:ap" o; do
     case "${o}" in
         a)
             all="true"
             ;;
         F)
             LPASS_FOLDER=${OPTARG}
+            ;;
+        p)
+            parg="true"
             ;;
         *)
             usage
@@ -80,5 +83,16 @@ do
     lpass show --field "Private Key" "$KEY_NAME" > "$TEMP_CERT_FILE"
     chmod 0400 $TEMP_CERT_FILE
     echo "Adding SSH key $KEY_NAME"
-    ssh-add "$TEMP_CERT_FILE"
+    if [ -z ${parg-} ]
+    then
+        PASS=$(lpass show --field "Passphrase" "$KEY_NAME")
+        expect -c "
+            spawn ssh-add \"$TEMP_CERT_FILE\"
+            expect \"Enter passphrase\"
+            send \"$PASS\r\"
+            expect eof
+        "
+    else
+        ssh-add "$TEMP_CERT_FILE"
+    fi
 done
